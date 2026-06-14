@@ -1,0 +1,10 @@
+{
+  "short_name": "복싱타이머",
+  "name": "복싱 커스텀 타이머",
+  "icons": [],
+  "start_url": "./index.html",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "display": "standalone",
+  "orientation": "portrait"
+}
