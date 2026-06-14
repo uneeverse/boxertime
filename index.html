@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>복싱 커스텀 타이머</title>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
@@ -490,9 +495,8 @@
                 if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
             }
 
-            // [액션 콜 전용] 상대 경로 배포용 비프음 경로 수정
             function playRandomBeep() {
-                const audioSrc = './BeepSound.mp3'; // <-- 상대 경로로 수정 완료
+                const audioSrc = './BeepSound.mp3'; 
                 const beepAudio = new Audio(audioSrc);
                 beepAudio.play().catch(e => console.error(e));
             }
@@ -689,14 +693,13 @@
                     fileNum = Math.floor(Math.random() * 39) + 1; comboTextStr = basicCombosText[fileNum - 1];
                 }
 
-                const audioSrc = `./${folder}/${folder}_${fileNum}.mp3`; // <-- 상대 경로로 수정 완료
+                const audioSrc = `./${folder}/${folder}_${fileNum}.mp3`; 
                 currentComboAudio = new Audio(audioSrc); isAudioPlaying = true; 
                 t2_textDisplayEl.textContent = comboTextStr;
 
                 currentComboAudio.onended = () => { isAudioPlaying = false; t2_textDisplayEl.textContent = ""; scheduleNextCombo(false); };
                 currentComboAudio.onerror = () => {
                     isAudioPlaying = false; t2_textDisplayEl.textContent = ""; 
-                    // 무한 루프를 막고 에러가 났을 때 다음 오디오 스케줄로 안전하게 넘어가도록 지연 세팅
                     setTimeout(() => { if (t2_isRunning && t2_isWorkPhase && !t2_isPrepPhase && !isAudioPlaying) scheduleNextCombo(false); }, 1000);
                 };
                 currentComboAudio.play().catch(e => { isAudioPlaying = false; t2_textDisplayEl.textContent = ""; scheduleNextCombo(false); });
