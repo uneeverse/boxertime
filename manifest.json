@@ -1,6 +1,6 @@
 {
-  "short_name": "복싱타이머",
-  "name": "복싱 커스텀 타이머",
+  "short_name": "Boxer Time",
+  "name": "Boxer Time Custom Timer",
   "icons": [
     {
       "src": "./app_icon.png",
