@@ -480,11 +480,11 @@
                 if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
             }
 
-            // [수정] 액션 콜 파일 경로를 확실한 절대 경로(file:///)로 롤백
+            // [수정] 상대 경로 형식 수정 및 프로젝트 폴더 내 BeepSound.mp3 직접 연동
             function playRandomBeep() {
-                const audioSrc = 'file:///C:/Users/PC_1M/Desktop/Boxing_Timer/BeepSound.mp3'; 
+                const audioSrc = './BeepSound.mp3'; 
                 const beepAudio = new Audio(audioSrc);
-                beepAudio.play().catch(e => console.error("액션 콜 로드/재생 실패:", e));
+                beepAudio.play().catch(e => console.error("액션 콜 재생 실패 (파일 위치를 확인하세요):", e));
             }
 
             function playCountdownBeep() {
@@ -513,7 +513,7 @@
             }
 
             // ==========================================
-            // 1. [타이머] 화면 로직
+            // 1. [타이머] 화면 로직 (액션 콜 무작위 스케줄링)
             // ==========================================
             let t1_workSeconds = 180, t1_restSeconds = 30, t1_totalRounds = 5;
             let t1_timeLeft = 0, t1_isWorkPhase = true, t1_isPrepPhase = false, t1_currentRound = 1;
@@ -533,12 +533,16 @@
             const t1_setBtns = document.querySelectorAll('.set-btn');
             const beepToggle = document.getElementById('beep-toggle');
 
+            // [수정] 최소 3초 ~ 최대 6초 마다 재생되도록 간격 스케줄 변경 (3000ms ~ 6000ms)
             function scheduleNextRandomBeep() {
                 if (!t1_isRunning || !t1_isWorkPhase || t1_isPrepPhase || !beepToggle.checked) return;
-                const randomDelay = Math.floor(Math.random() * (8000 - 3000 + 1)) + 3000;
+                
+                const randomDelay = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
+                
                 beepTimeout = setTimeout(() => {
                     if (t1_isRunning && t1_isWorkPhase && !t1_isPrepPhase && beepToggle.checked) {
-                        playRandomBeep(); scheduleNextRandomBeep();
+                        playRandomBeep(); 
+                        scheduleNextRandomBeep();
                     }
                 }, randomDelay);
             }
@@ -584,7 +588,10 @@
                     t1_isRunning = true; toggleT1Settings(true);
                 }
                 t1_startBtn.disabled = true; t1_pauseBtn.disabled = false;
+                
+                // 훈련이 시작될 때 최소 3초 ~ 최대 6초 스케줄러 즉시 예약 실행
                 if (t1_isWorkPhase && !t1_isPrepPhase) scheduleNextRandomBeep();
+                
                 t1_timerInterval = setInterval(() => {
                     t1_timeLeft--;
                     if (t1_isPrepPhase && t1_timeLeft <= 3 && t1_timeLeft > 0) playCountdownBeep();
@@ -655,7 +662,7 @@
                     }
                 }
 
-                const audioSrc = `file:///C:/Users/PC_1M/Desktop/Boxing_Timer/${folder}/${folder}_${fileNum}.mp3`;
+                const audioSrc = `./${folder}/${folder}_${fileNum}.mp3`;
                 currentComboAudio = new Audio(audioSrc); isAudioPlaying = true; 
 
                 currentComboAudio.onended = () => { isAudioPlaying = false; scheduleNextCombo(false); };
