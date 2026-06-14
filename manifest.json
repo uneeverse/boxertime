@@ -3,7 +3,7 @@
   "name": "복싱 커스텀 타이머",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3112/3112942.png",
+      "src": "./app-icon.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
