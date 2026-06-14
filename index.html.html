@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>복싱 커스텀 타이머</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+    <style>
+        /* 글로벌 프로페셔널 다크 테마 및 한글/기본 폰트 설정 (Do Hyeon) */
+        body {
+            font-family: 'Do Hyeon', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            margin: 0;
+            background-color: #000000;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* 메인 앱 컨테이너 */
+        #app-container {
+            width: 100%;
+            max-width: 480px;
+            background-color: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            border-radius: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            border: 1px solid #222;
+            overflow: hidden;
+            margin: 20px;
+            height: 90vh; 
+            max-height: 900px;
+        }
+
+        /* 상단 네비게이션 탭 */
+        #top-nav {
+            display: flex;
+            background-color: #000000;
+            padding: 15px 20px;
+            gap: 12px;
+            border-bottom: 1px solid #222;
+        }
+        .nav-btn {
+            flex: 1;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 14px;
+            color: #888888;
+            font-size: 24px; 
+            font-family: 'Do Hyeon', sans-serif;
+            padding: 12px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .nav-btn.active {
+            background-color: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+            box-shadow: 0 4px 10px rgba(255,255,255,0.1);
+        }
+
+        /* 뷰 영역 */
+        .view {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            align-items: center;
+            padding: 25px 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        .view.active {
+            display: flex;
+        }
+
+        .timer-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+        }
+
+        /* 공통 카드 스타일 (기본 패딩 설정은 유지하되 아래에서 화면별 균등 조정) */
+        .card {
+            background-color: #141414;
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid #2a2a2a;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* [수정] 타이머 화면과 펀치 콜 화면의 상단 설정 카드 세로 크기 비율 통일 */
+        #timer-view .card:first-child,
+        #combo-view .card:first-child {
+            padding: 15px 25px; /* 양쪽 화면 모두 내부 위아래 여백을 15px로 균등 축소 */
+        }
+
+        /* 타이머 디스플레이 카드 전용 스타일 */
+        .display-card {
+            text-align: center;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        /* 준비 시간 (옐로우) */
+        .display-card.prep-phase {
+            background-color: #f1c40f;
+            border-color: #f1c40f;
+            box-shadow: 0 0 30px rgba(241, 196, 15, 0.2);
+        }
+
+        /* 운동 시간 (형광 그린) */
+        .display-card.work-phase {
+            background-color: #39ff14;
+            border-color: #39ff14;
+            box-shadow: 0 0 30px rgba(57, 255, 20, 0.2);
+        }
+
+        /* 휴식 시간 (연한 파랑색) */
+        .display-card.rest-phase {
+            background-color: #74b9ff;
+            border-color: #74b9ff;
+            box-shadow: 0 0 30px rgba(116, 185, 255, 0.2);
+        }
+
+        /* 설정 리스트 그룹 */
+        .setup-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid #222;
+        }
+        .input-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .input-row:first-child { padding-top: 0; }
+
+        /* [수정] 타이머 화면과 펀치 콜 화면의 설정 행 간격 통일 (폰트 크기는 유지) */
+        #timer-view .input-row,
+        #combo-view .input-row {
+            padding: 10px 0; /* 양쪽 화면 모두 위아래 패딩을 10px로 축소 */
+        }
+        #timer-view .input-row:last-child,
+        #combo-view .input-row:last-child { padding-bottom: 0; }
+        #timer-view .input-row:first-child,
+        #combo-view .input-row:first-child { padding-top: 0; }
+        
+        .input-row label.title {
+            font-size: 21px; 
+            color: #ffffff;
+        }
+
+        /* +/- 버튼 부분의 가로 크기 확대 */
+        .control-group {
+            display: flex;
+            align-items: center;
+            background-color: #000000;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 6px 10px; 
+            width: 170px; 
+            justify-content: space-between;
+        }
+        .control-btn {
+            width: 44px; 
+            height: 44px;
+            border-radius: 8px;
+            border: none;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-size: 26px;
+            font-family: 'Do Hyeon', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        .control-btn:hover:not(:disabled) { background-color: #333; }
+        .control-btn:disabled { color: #555; cursor: not-allowed; }
+        
+        .val-display, .val-input {
+            font-size: 23px; 
+            font-family: 'Do Hyeon', sans-serif;
+            width: 70px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            color: #ffffff;
+            background: transparent;
+            border: none;
+            outline: none;
+        }
+        .val-input::-webkit-outer-spin-button,
+        .val-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .val-input[type=number] { -moz-appearance: textfield; }
+        .val-input:disabled { color: #555; cursor: not-allowed; }
+
+        /* 토글 스위치 디자인 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 54px;
+            height: 30px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .3s;
+            border-radius: 30px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #39ff14; }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        /* 상태 텍스트 */
+        #status, #combo-status {
+            font-size: 32px; 
+            margin-bottom: 8px;
+            color: #ffffff; 
+            letter-spacing: 1px;
+        }
+        
+        #round-display, #combo-round-display {
+            font-size: 22px; 
+            margin-bottom: 15px;
+            color: #aaaaaa;
+        }
+        
+        /* 타이머 숫자 출력 */
+        #time, #combo-time {
+            font-size: 95px; 
+            font-family: 'Do Hyeon', sans-serif; 
+            letter-spacing: 0px;
+            color: #ffffff;
+            line-height: 1;
+            margin-bottom: 25px;
+        }
+
+        /* 펀치 콜 영어 텍스트 출력 (Orbitron 폰트) */
+        #combo-text-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            color: #ffffff;
+            min-height: 45px; 
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+            word-break: keep-all;
+            text-transform: uppercase; 
+        }
+
+        /* === 활성화 상태 (준비/운동/휴식) 디스플레이 카드 글자색 검정 통일 === */
+        .display-card.prep-phase #status,
+        .display-card.prep-phase #combo-status,
+        .display-card.prep-phase #round-display,
+        .display-card.prep-phase #combo-round-display,
+        .display-card.prep-phase #time,
+        .display-card.prep-phase #combo-time,
+        .display-card.prep-phase #combo-text-display,
+        .display-card.work-phase #status,
+        .display-card.work-phase #combo-status,
+        .display-card.work-phase #round-display,
+        .display-card.work-phase #combo-round-display,
+        .display-card.work-phase #time,
+        .display-card.work-phase #combo-time,
+        .display-card.work-phase #combo-text-display,
+        .display-card.rest-phase #status,
+        .display-card.rest-phase #combo-status,
+        .display-card.rest-phase #round-display,
+        .display-card.rest-phase #combo-round-display,
+        .display-card.rest-phase #time,
+        .display-card.rest-phase #combo-time,
+        .display-card.rest-phase #combo-text-display {
+            color: #000000 !important;
+        }
+        
+        /* 하단 제어 버튼 그룹 */
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+        }
+        .btn-group button {
+            flex: 1;
+            font-size: 22px; 
+            font-family: 'Do Hyeon', sans-serif;
+            padding: 14px 0;
+            cursor: pointer;
+            border: none;
+            border-radius: 12px;
+            color: #000000;
+            transition: all 0.2s;
+        }
+        #start-btn, #combo-start-btn { background-color: #ffffff; } 
+        #start-btn:hover:not(:disabled), #combo-start-btn:hover:not(:disabled) { background-color: #e0e0e0; }
+        
+        #pause-btn, #combo-pause-btn { background-color: #555555; color: #ffffff; } 
+        #pause-btn:hover:not(:disabled), #combo-pause-btn:hover:not(:disabled) { background-color: #666666; }
+        
+        #reset-btn, #combo-reset-btn { background-color: #333333; color: #ffffff; } 
+        #reset-btn:hover { background-color: #444444; }
+        
+        button:disabled { 
+            background-color: #1a1a1a !important; 
+            color: #444444 !important;
+            cursor: not-allowed; 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <div id="top-nav">
+            <button class="nav-btn active" data-target="timer-view">타이머</button>
+            <button class="nav-btn" data-target="combo-view">펀치 콜</button>
+        </div>
+
+        <div id="timer-view" class="view active">
+            <div class="timer-container">
+                <div class="card">
+                    <div class="setup-group">
+                        <div class="input-row">
+                            <label class="title">액션 콜</label>
+                            <label class="switch">
+                                <input type="checkbox" id="beep-toggle" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="input-row">
+                            <label class="title">운동 시간</label>
+                            <div class="control-group">
+                                <button id="work-minus" class="control-btn set-btn">-</button>
+                                <div id="work-val" class="val-display">03:00</div>
+                                <button id="work-plus" class="control-btn set-btn">+</button>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <label class="title">휴식 시간</label>
+                            <div class="control-group">
+                                <button id="rest-minus" class="control-btn set-btn">-</button>
+                                <div id="rest-val" class="val-display">00:30</div>
+                                <button id="rest-plus" class="control-btn set-btn">+</button>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <label class="title">라운드 수</label>
+                            <div class="control-group">
+                                <button id="round-minus" class="control-btn set-btn">-</button>
+                                <input type="number" id="round-val" class="val-input" value="5" min="1" max="100">
+                                <button id="round-plus" class="control-btn set-btn">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card display-card" id="t1-display-card">
+                    <div id="status">대기 중</div>
+                    <div id="round-display">라운드 1 / 5</div>
+                    <div id="time">03:00</div>
+                    <div class="btn-group">
+                        <button id="start-btn">시작</button>
+                        <button id="pause-btn" disabled>일시정지</button>
+                        <button id="reset-btn">초기화</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="combo-view" class="view">
+            <div class="timer-container">
+                <div class="card">
+                    <div class="setup-group">
+                        <div class="input-row">
+                            <label class="title">디펜스 온</label>
+                            <label class="switch">
+                                <input type="checkbox" id="defense-toggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="input-row">
+                            <label class="title">운동 시간</label>
+                            <div class="control-group">
+                                <button id="combo-work-minus" class="control-btn combo-set-btn">-</button>
+                                <div id="combo-work-val" class="val-display">03:00</div>
+                                <button id="combo-work-plus" class="control-btn combo-set-btn">+</button>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <label class="title">휴식 시간</label>
+                            <div class="control-group">
+                                <button id="combo-rest-minus" class="control-btn combo-set-btn">-</button>
+                                <div id="combo-rest-val" class="val-display">00:30</div>
+                                <button id="combo-rest-plus" class="control-btn combo-set-btn">+</button>
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <label class="title">라운드 수</label>
+                            <div class="control-group">
+                                <button id="combo-round-minus" class="control-btn combo-set-btn">-</button>
+                                <input type="number" id="combo-round-val" class="val-input" value="5" min="1" max="100">
+                                <button id="combo-round-plus" class="control-btn combo-set-btn">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card display-card" id="t2-display-card">
+                    <div id="combo-status">대기 중</div>
+                    <div id="combo-round-display">라운드 1 / 5</div>
+                    <div id="combo-time">03:00</div>
+                    <div id="combo-text-display"></div>
+                    <div class="btn-group">
+                        <button id="combo-start-btn">시작</button>
+                        <button id="combo-pause-btn" disabled>일시정지</button>
+                        <button id="combo-reset-btn">초기화</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const MAX_TIME = 600;
+            const TIME_STEP = 30;
+            const PREP_TIME = 10; 
+
+            function formatTime(seconds) {
+                const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const s = (seconds % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            }
+
+            // ==========================================
+            // [통합] 탭 전환 및 모든 타이머 강제 종료 로직
+            // ==========================================
+            function stopAllTimers() {
+                clearInterval(t1_timerInterval); clearTimeout(beepTimeout);
+                t1_timerInterval = null; t1_isRunning = false;
+                initT1Timer(); t1_startBtn.disabled = false; t1_pauseBtn.disabled = true; toggleT1Settings(false);
+                
+                clearInterval(t2_timerInterval); clearTimeout(comboTimeout);
+                stopComboAudio();
+                t2_timerInterval = null; t2_isRunning = false;
+                initT2Timer(); t2_startBtn.disabled = false; t2_pauseBtn.disabled = true; toggleT2Settings(false);
+            }
+
+            const navBtns = document.querySelectorAll('.nav-btn');
+            const views = document.querySelectorAll('.view');
+
+            navBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    stopAllTimers(); 
+                    navBtns.forEach(b => b.classList.remove('active'));
+                    views.forEach(v => v.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(btn.getAttribute('data-target')).classList.add('active');
+                });
+            });
+
+            // ==========================================
+            // 공통 오디오 로직 
+            // ==========================================
+            let globalAudioCtx = null;
+
+            function initGlobalAudio() {
+                if (!globalAudioCtx) globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
+            }
+
+            // [액션 콜 전용] 로컬 MP3 파일 비프음
+            function playRandomBeep() {
+                const audioSrc = 'file:///C:/Users/PC_1M/Desktop/Boxing_Timer/BeepSound.mp3';
+                const beepAudio = new Audio(audioSrc);
+                beepAudio.play().catch(e => console.error(e));
+            }
+
+            function playCountdownBeep() {
+                if (!globalAudioCtx) return;
+                const osc = globalAudioCtx.createOscillator();
+                const gain = globalAudioCtx.createGain();
+                osc.type = 'sine'; 
+                osc.frequency.setValueAtTime(880, globalAudioCtx.currentTime); 
+                gain.gain.setValueAtTime(1, globalAudioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, globalAudioCtx.currentTime + 0.2); 
+                osc.connect(gain); gain.connect(globalAudioCtx.destination);
+                osc.start(); osc.stop(globalAudioCtx.currentTime + 0.2);
+            }
+
+            function playPhaseChangeBeep() {
+                if (!globalAudioCtx) return;
+                const osc = globalAudioCtx.createOscillator();
+                const gain = globalAudioCtx.createGain();
+                osc.type = 'sawtooth'; 
+                osc.frequency.setValueAtTime(130, globalAudioCtx.currentTime); 
+                gain.gain.setValueAtTime(1, globalAudioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.8, globalAudioCtx.currentTime + 0.8); 
+                gain.gain.exponentialRampToValueAtTime(0.001, globalAudioCtx.currentTime + 1.2); 
+                osc.connect(gain); gain.connect(globalAudioCtx.destination);
+                osc.start(); osc.stop(globalAudioCtx.currentTime + 1.2);
+            }
+
+            // ==========================================
+            // 1. [타이머] 화면 로직
+            // ==========================================
+            let t1_workSeconds = 180, t1_restSeconds = 30, t1_totalRounds = 5;
+            let t1_timeLeft = 0, t1_isWorkPhase = true, t1_isPrepPhase = false, t1_currentRound = 1;
+            let t1_timerInterval = null, t1_isRunning = false;
+            let beepTimeout = null;
+
+            const t1_workValEl = document.getElementById('work-val');
+            const t1_restValEl = document.getElementById('rest-val');
+            const t1_roundValEl = document.getElementById('round-val');
+            const t1_statusEl = document.getElementById('status');
+            const t1_roundDisplayEl = document.getElementById('round-display');
+            const t1_timeEl = document.getElementById('time');
+            const t1_displayCard = document.getElementById('t1-display-card'); 
+            const t1_startBtn = document.getElementById('start-btn');
+            const t1_pauseBtn = document.getElementById('pause-btn');
+            const t1_resetBtn = document.getElementById('reset-btn');
+            const t1_setBtns = document.querySelectorAll('.set-btn');
+            const beepToggle = document.getElementById('beep-toggle');
+
+            function scheduleNextRandomBeep() {
+                if (!t1_isRunning || !t1_isWorkPhase || t1_isPrepPhase || !beepToggle.checked) return;
+                const randomDelay = Math.floor(Math.random() * (8000 - 3000 + 1)) + 3000;
+                beepTimeout = setTimeout(() => {
+                    if (t1_isRunning && t1_isWorkPhase && !t1_isPrepPhase && beepToggle.checked) {
+                        playRandomBeep(); scheduleNextRandomBeep();
+                    }
+                }, randomDelay);
+            }
+
+            function updateT1SettingsUI() {
+                t1_workValEl.textContent = formatTime(t1_workSeconds);
+                t1_restValEl.textContent = formatTime(t1_restSeconds);
+                t1_roundValEl.value = t1_totalRounds;
+                if (!t1_isRunning && t1_timerInterval === null && t1_currentRound === 1 && t1_isWorkPhase && !t1_isPrepPhase) {
+                    t1_timeLeft = t1_workSeconds; t1_timeEl.textContent = formatTime(t1_timeLeft);
+                    t1_roundDisplayEl.textContent = `라운드 1 / ${t1_totalRounds}`;
+                }
+            }
+
+            function updateT1TimerUI() {
+                t1_timeEl.textContent = formatTime(t1_timeLeft);
+                if (t1_statusEl.textContent === '완료') { 
+                    t1_roundDisplayEl.textContent = `종료되었습니다`; 
+                    t1_displayCard.className = 'card display-card'; 
+                    return; 
+                }
+                t1_roundDisplayEl.textContent = `라운드 ${t1_currentRound} / ${t1_totalRounds}`;
+                if (t1_isPrepPhase) { t1_statusEl.textContent = '준비'; t1_displayCard.className = 'card display-card prep-phase'; }
+                else if (t1_isWorkPhase) { t1_statusEl.textContent = '훈련'; t1_displayCard.className = 'card display-card work-phase'; }
+                else { t1_statusEl.textContent = '휴식'; t1_displayCard.className = 'card display-card rest-phase'; }
+            }
+
+            function initT1Timer() {
+                t1_isPrepPhase = false; t1_timeLeft = t1_workSeconds; t1_isWorkPhase = true; t1_currentRound = 1;
+                t1_statusEl.textContent = '대기 중'; t1_displayCard.className = 'card display-card';
+                updateT1TimerUI();
+            }
+
+            function toggleT1Settings(disable) {
+                t1_setBtns.forEach(btn => btn.disabled = disable); t1_roundValEl.disabled = disable;
+            }
+
+            t1_startBtn.addEventListener('click', () => {
+                if (t1_timerInterval) return;
+                initGlobalAudio();
+                if (!t1_isRunning) {
+                    if (t1_currentRound === 1 && t1_timeLeft === t1_workSeconds && !t1_isPrepPhase) { t1_isPrepPhase = true; t1_timeLeft = PREP_TIME; }
+                    t1_isRunning = true; toggleT1Settings(true);
+                }
+                t1_startBtn.disabled = true; t1_pauseBtn.disabled = false;
+                if (t1_isWorkPhase && !t1_isPrepPhase) scheduleNextRandomBeep();
+                t1_timerInterval = setInterval(() => {
+                    t1_timeLeft--;
+                    if (t1_isPrepPhase && t1_timeLeft <= 3 && t1_timeLeft > 0) playCountdownBeep();
+                    if (t1_isWorkPhase && t1_timeLeft <= 5 && t1_timeLeft > 0) playCountdownBeep();
+                    if (t1_timeLeft === 0) playPhaseChangeBeep();
+                    if (t1_timeLeft < 0) {
+                        if (t1_isPrepPhase) { t1_isPrepPhase = false; t1_isWorkPhase = true; t1_timeLeft = t1_workSeconds; scheduleNextRandomBeep(); }
+                        else if (t1_isWorkPhase) {
+                            if (t1_currentRound >= t1_totalRounds) { clearInterval(t1_timerInterval); clearTimeout(beepTimeout); t1_timerInterval = null; t1_statusEl.textContent = '완료'; t1_startBtn.disabled = true; t1_pauseBtn.disabled = true; updateT1TimerUI(); return; }
+                            else { t1_isWorkPhase = false; t1_timeLeft = t1_restSeconds; clearTimeout(beepTimeout); }
+                        } else { t1_isWorkPhase = true; t1_currentRound++; t1_timeLeft = t1_workSeconds; scheduleNextRandomBeep(); }
+                    }
+                    updateT1TimerUI();
+                }, 1000);
+            });
+
+            t1_pauseBtn.addEventListener('click', () => { clearInterval(t1_timerInterval); clearTimeout(beepTimeout); t1_timerInterval = null; t1_startBtn.disabled = false; t1_pauseBtn.disabled = true; });
+            t1_resetBtn.addEventListener('click', () => { stopAllTimers(); });
+
+            document.getElementById('work-minus').addEventListener('click', () => { if (t1_workSeconds > TIME_STEP) { t1_workSeconds -= TIME_STEP; updateT1SettingsUI(); } });
+            document.getElementById('work-plus').addEventListener('click', () => { if (t1_workSeconds < MAX_TIME) { t1_workSeconds += TIME_STEP; updateT1SettingsUI(); } });
+            document.getElementById('rest-minus').addEventListener('click', () => { if (t1_restSeconds > 0) { t1_restSeconds -= TIME_STEP; updateT1SettingsUI(); } });
+            document.getElementById('rest-plus').addEventListener('click', () => { if (t1_restSeconds < MAX_TIME) { t1_restSeconds += TIME_STEP; updateT1SettingsUI(); } });
+            document.getElementById('round-minus').addEventListener('click', () => { if (t1_totalRounds > 1) { t1_totalRounds -= 1; updateT1SettingsUI(); } });
+            document.getElementById('round-plus').addEventListener('click', () => { if (t1_totalRounds < 100) { t1_totalRounds += 1; updateT1SettingsUI(); } });
+
+            // ==========================================
+            // 2. [펀치 콜] 화면 로직
+            // ==========================================
+            let t2_workSeconds = 180, t2_restSeconds = 30, t2_totalRounds = 5;
+            let t2_timeLeft = 0, t2_isWorkPhase = true, t2_isPrepPhase = false, t2_currentRound = 1;
+            let t2_timerInterval = null, t2_isRunning = false;
+            let comboTimeout = null;
+            let currentComboAudio = null; 
+            let isAudioPlaying = false; 
+
+            const basicCombosText = [
+                "one two", "jab jab two", "one two one two", "one hook", "one upper", "one body", "two hook", 
+                "two upper", "two body", "two hook hook", "two upper upper", "two body body", "two hook upper", 
+                "two upper hook", "one two hook", "one two upper", "one two body", "one two hook hook", "one two upper upper", 
+                "one two body body", "one body hook", "one upper hook", "jab hook upper", "jab hook hook", "jab upper upper", 
+                "jab body body", "one two body hook", "one two hook body", "one two upper hook", "one two hook upper", 
+                "jab jab two hook", "jab jab upper hook", "one body hook hook", "jab upper hook hook", "jab hook hook upper", 
+                "jab upper upper hook", "jab body body hook", "jab hook upper upper", "jab hook body body"
+            ];
+
+            const defenseCombosText = [
+                "one two ducking", "one two ducking two", "one two ducking hook", "one two ducking upper", "one two ducking body", 
+                "jab ducking one two", "jab ducking hook", "jab ducking upper", "jab ducking body", "jab ducking hook two", 
+                "jab ducking hook hook", "jab ducking hook upper", "jab ducking hook body", "jab ducking upper upper", 
+                "jab ducking upper two", "jab ducking upper hook", "jab ducking body two", "jab ducking body body", 
+                "jab ducking body hook", "one two hook ducking", "one two hook ducking upper", "one two hook ducking hook", 
+                "one two hook ducking body", "one two weaving", "one two weaving hook", "one two weaving upper", "one two weaving body", 
+                "one two hook weaving", "one two hook weaving upper", "one two hook weaving hook", "one two hook weaving body"
+            ];
+
+            const t2_workValEl = document.getElementById('combo-work-val');
+            const t2_restValEl = document.getElementById('combo-rest-val');
+            const t2_roundValEl = document.getElementById('combo-round-val');
+            const t2_statusEl = document.getElementById('combo-status');
+            const t2_roundDisplayEl = document.getElementById('combo-round-display');
+            const t2_timeEl = document.getElementById('combo-time');
+            const t2_textDisplayEl = document.getElementById('combo-text-display'); 
+            const t2_displayCard = document.getElementById('t2-display-card'); 
+            const t2_startBtn = document.getElementById('combo-start-btn');
+            const t2_pauseBtn = document.getElementById('combo-pause-btn');
+            const t2_resetBtn = document.getElementById('combo-reset-btn');
+            const t2_setBtns = document.querySelectorAll('.combo-set-btn');
+            const defenseToggle = document.getElementById('defense-toggle');
+
+            function stopComboAudio() {
+                if (currentComboAudio) { currentComboAudio.pause(); currentComboAudio.removeAttribute('src'); currentComboAudio.load(); currentComboAudio = null; }
+                isAudioPlaying = false; t2_textDisplayEl.textContent = ""; 
+            }
+
+            function playRandomComboAudio() {
+                if (!t2_isRunning || !t2_isWorkPhase || t2_isPrepPhase || isAudioPlaying) return;
+                stopComboAudio(); 
+
+                let folder = 'basic';
+                let fileNum = 1;
+                let comboTextStr = "";
+
+                if (defenseToggle.checked) {
+                    const randomTotal = Math.floor(Math.random() * 70) + 1;
+                    if (randomTotal <= 39) {
+                        folder = 'basic'; fileNum = randomTotal; comboTextStr = basicCombosText[fileNum - 1];
+                    } else {
+                        folder = 'defense'; fileNum = randomTotal - 39; comboTextStr = defenseCombosText[fileNum - 1];
+                    }
+                } else {
+                    fileNum = Math.floor(Math.random() * 39) + 1; comboTextStr = basicCombosText[fileNum - 1];
+                }
+
+                const audioSrc = `file:///C:/Users/PC_1M/Desktop/Boxing_Timer/${folder}/${folder}_${fileNum}.mp3`;
+                currentComboAudio = new Audio(audioSrc); isAudioPlaying = true; 
+                t2_textDisplayEl.textContent = comboTextStr;
+
+                currentComboAudio.onended = () => { isAudioPlaying = false; t2_textDisplayEl.textContent = ""; scheduleNextCombo(false); };
+                currentComboAudio.onerror = () => {
+                    isAudioPlaying = false; t2_textDisplayEl.textContent = ""; 
+                    setTimeout(() => { if (t2_isRunning && t2_isWorkPhase && !t2_isPrepPhase && !isAudioPlaying) playRandomComboAudio(); }, 100);
+                };
+                currentComboAudio.play().catch(e => { isAudioPlaying = false; t2_textDisplayEl.textContent = ""; scheduleNextCombo(false); });
+            }
+
+            function scheduleNextCombo(isFirst = false) {
+                clearTimeout(comboTimeout);
+                if (!t2_isRunning || !t2_isWorkPhase || t2_isPrepPhase) return;
+                const maxDelay = isFirst ? 3500 : 5000;
+                const minDelay = 2000;
+                const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+                comboTimeout = setTimeout(() => { if (t2_isRunning && t2_isWorkPhase && !t2_isPrepPhase && !isAudioPlaying) playRandomComboAudio(); }, randomDelay);
+            }
+
+            function updateT2SettingsUI() {
+                t2_workValEl.textContent = formatTime(t2_workSeconds);
+                t2_restValEl.textContent = formatTime(t2_restSeconds);
+                t2_roundValEl.value = t2_totalRounds;
+                if (!t2_isRunning && t2_timerInterval === null && t2_currentRound === 1 && t2_isWorkPhase && !t2_isPrepPhase) {
+                    t2_timeLeft = t2_workSeconds; t2_timeEl.textContent = formatTime(t2_timeLeft);
+                    t2_roundDisplayEl.textContent = `라운드 1 / ${t2_totalRounds}`;
+                }
+            }
+
+            function updateT2TimerUI() {
+                t2_timeEl.textContent = formatTime(t2_timeLeft);
+                if (t2_statusEl.textContent === '완료') { t2_roundDisplayEl.textContent = `종료되었습니다`; t2_displayCard.className = 'card display-card'; return; }
+                t2_roundDisplayEl.textContent = `라운드 ${t2_currentRound} / ${t2_totalRounds}`;
+                if (t2_isPrepPhase) { t2_statusEl.textContent = '준비'; t2_displayCard.className = 'card display-card prep-phase'; }
+                else if (t2_isWorkPhase) { t2_statusEl.textContent = '훈련'; t2_displayCard.className = 'card display-card work-phase'; }
+                else { t2_statusEl.textContent = '휴식'; t2_displayCard.className = 'card display-card rest-phase'; }
+            }
+
+            function initT2Timer() {
+                t2_isPrepPhase = false; t2_timeLeft = t2_workSeconds; t2_isWorkPhase = true; t2_currentRound = 1;
+                t2_statusEl.textContent = '대기 중'; t2_displayCard.className = 'card display-card';
+                updateT2TimerUI();
+            }
+
+            function toggleT2Settings(disable) {
+                t2_setBtns.forEach(btn => btn.disabled = disable); t2_roundValEl.disabled = disable;
+            }
+
+            t2_startBtn.addEventListener('click', () => {
+                if (t2_timerInterval) return;
+                initGlobalAudio();
+                if (!t2_isRunning) {
+                    if (t2_currentRound === 1 && t2_timeLeft === t2_workSeconds && !t2_isPrepPhase) { t2_isPrepPhase = true; t2_timeLeft = PREP_TIME; }
+                    t2_isRunning = true; toggleT2Settings(true);
+                }
+                t2_startBtn.disabled = true; t2_pauseBtn.disabled = false;
+                if (t2_isWorkPhase && !t2_isPrepPhase && !isAudioPlaying) scheduleNextCombo(true);
+                t2_timerInterval = setInterval(() => {
+                    t2_timeLeft--;
+                    if (t2_timeLeft <= 3 && t2_timeLeft > 0 && t2_isPrepPhase) playCountdownBeep();
+                    if (t2_timeLeft <= 5 && t2_timeLeft > 0 && t2_isWorkPhase) playCountdownBeep();
+                    if (t2_timeLeft === 0) playPhaseChangeBeep();
+                    if (t2_timeLeft < 0) {
+                        if (t2_isPrepPhase) { t2_isPrepPhase = false; t2_isWorkPhase = true; t2_timeLeft = t2_workSeconds; scheduleNextCombo(true); }
+                        else if (t2_isWorkPhase) {
+                            if (t2_currentRound >= t2_totalRounds) { clearInterval(t2_timerInterval); clearTimeout(comboTimeout); stopComboAudio(); t2_timerInterval = null; t2_statusEl.textContent = '완료'; t2_startBtn.disabled = true; t2_pauseBtn.disabled = true; updateT2TimerUI(); return; }
+                            else { t2_isWorkPhase = false; t2_timeLeft = t2_restSeconds; clearTimeout(comboTimeout); stopComboAudio(); }
+                        } else { t2_isWorkPhase = true; t2_currentRound++; t2_timeLeft = t2_workSeconds; scheduleNextCombo(true); }
+                    }
+                    updateT2TimerUI();
+                }, 1000);
+            });
+
+            t2_pauseBtn.addEventListener('click', () => { clearInterval(t2_timerInterval); clearTimeout(comboTimeout); stopComboAudio(); t2_timerInterval = null; t2_startBtn.disabled = false; t2_pauseBtn.disabled = true; });
+            t2_resetBtn.addEventListener('click', () => { stopAllTimers(); });
+
+            document.getElementById('combo-work-minus').addEventListener('click', () => { if (t2_workSeconds > TIME_STEP) { t2_workSeconds -= TIME_STEP; updateT2SettingsUI(); } });
+            document.getElementById('combo-work-plus').addEventListener('click', () => { if (t2_workSeconds < MAX_TIME) { t2_workSeconds += TIME_STEP; updateT2SettingsUI(); } });
+            document.getElementById('combo-rest-minus').addEventListener('click', () => { if (t2_restSeconds > 0) { t2_restSeconds -= TIME_STEP; updateT2SettingsUI(); } });
+            document.getElementById('combo-rest-plus').addEventListener('click', () => { if (t2_restSeconds < MAX_TIME) { t2_restSeconds += TIME_STEP; updateT2SettingsUI(); } });
+            document.getElementById('combo-round-minus').addEventListener('click', () => { if (t2_totalRounds > 1) { t2_totalRounds -= 1; updateT2SettingsUI(); } });
+            document.getElementById('combo-round-plus').addEventListener('click', () => { if (t2_totalRounds < 100) { t2_totalRounds += 1; updateT2SettingsUI(); } });
+
+            updateT1SettingsUI(); initT1Timer(); updateT2SettingsUI(); initT2Timer();
+        });
+    </script>
+</body>
+</html>
