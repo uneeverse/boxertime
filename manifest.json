@@ -1,7 +1,14 @@
 {
   "short_name": "복싱타이머",
   "name": "복싱 커스텀 타이머",
-  "icons": [],
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3112/3112942.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
   "start_url": "./index.html",
   "background_color": "#000000",
   "theme_color": "#000000",
