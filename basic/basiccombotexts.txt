@@ -1,0 +1,39 @@
+1 one two 
+2 jab jab two
+3 one two one two
+4 one hook
+5 one upper
+6 one body
+7 two hook
+8 two upper
+9 two body
+10 two hook hook
+11 two upper upper
+12 two body body
+13 two hook upper
+14 two upper hook
+15 one two hook
+16 one two upper
+17 one two body
+18 one two hook hook
+19 one two upper upper
+20 one two body body
+21 one body hook
+22 one upper hook
+23 jab hook upper
+24 jab hook hook
+25 jab upper upper
+26 jab body body
+27 one two body hook
+28 one two hook body
+29 one two upper hook
+30 one two hook upper
+31 jab jab two hook
+32 jab jab upper hook
+33 one body hook hook
+34 jab upper hook hook
+35jab hook hook upper
+36 jab upper upper hook
+37 jab body body hook
+38 jab hook upper upper
+39 jab hook body body

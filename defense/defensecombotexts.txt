@@ -1,0 +1,31 @@
+1 one two ducking 
+2 one two ducking two 
+3 one two ducking hook 
+4 one two ducking upper 
+5 one two ducking body 
+6 jab ducking one two 
+7 jab ducking hook 
+8 jab ducking upper 
+9 jab ducking body 
+10 jab ducking hook two 
+11 jab ducking hook hook 
+12 jab ducking hook upper 
+13 jab ducking hook body 
+14 jab ducking upper upper 
+15 jab ducking upper two 
+16 jab ducking upper hook 
+17 jab ducking body two 
+18 jab ducking body body 
+19 jab ducking body hook 
+20 one two hook ducking 
+21 one two hook ducking upper 
+22 one two hook ducking hook 
+23 one two hook ducking body 
+24 one two weaving 
+25 one two weaving hook 
+26 one two weaving upper 
+27 one two weaving body  
+28 one two hook weaving 
+29 one two hook weaving upper 
+30 one two hook weaving hook 
+31 one two hook weaving body
