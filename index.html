@@ -110,7 +110,7 @@
         .display-card {
             text-align: center;
             transition: background-color 0.4s ease, color 0.4s ease;
-            padding: 40px 25px; 
+            padding: 40px 25px; /* 텍스트 제외 후 상하 여백 정돈 */
         }
 
         /* 준비 시간 (옐로우) */
@@ -261,7 +261,7 @@
             letter-spacing: 0px;
             color: #ffffff;
             line-height: 1;
-            margin-bottom: 35px; 
+            margin-bottom: 35px; /* 텍스트 영역 제거로 바텀 마진 확보 */
         }
 
         /* === 활성화 상태 디스플레이 카드 글자색 검정 통일 === */
@@ -480,11 +480,10 @@
                 if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
             }
 
-            // [수정] 상대 경로 형식 수정 및 프로젝트 폴더 내 BeepSound.mp3 직접 연동
             function playRandomBeep() {
                 const audioSrc = './BeepSound.mp3'; 
                 const beepAudio = new Audio(audioSrc);
-                beepAudio.play().catch(e => console.error("액션 콜 재생 실패 (파일 위치를 확인하세요):", e));
+                beepAudio.play().catch(e => console.error(e));
             }
 
             function playCountdownBeep() {
@@ -513,7 +512,7 @@
             }
 
             // ==========================================
-            // 1. [타이머] 화면 로직 (액션 콜 무작위 스케줄링)
+            // 1. [타이머] 화면 로직
             // ==========================================
             let t1_workSeconds = 180, t1_restSeconds = 30, t1_totalRounds = 5;
             let t1_timeLeft = 0, t1_isWorkPhase = true, t1_isPrepPhase = false, t1_currentRound = 1;
@@ -533,16 +532,12 @@
             const t1_setBtns = document.querySelectorAll('.set-btn');
             const beepToggle = document.getElementById('beep-toggle');
 
-            // [수정] 최소 3초 ~ 최대 6초 마다 재생되도록 간격 스케줄 변경 (3000ms ~ 6000ms)
             function scheduleNextRandomBeep() {
                 if (!t1_isRunning || !t1_isWorkPhase || t1_isPrepPhase || !beepToggle.checked) return;
-                
-                const randomDelay = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
-                
+                const randomDelay = Math.floor(Math.random() * (8000 - 3000 + 1)) + 3000;
                 beepTimeout = setTimeout(() => {
                     if (t1_isRunning && t1_isWorkPhase && !t1_isPrepPhase && beepToggle.checked) {
-                        playRandomBeep(); 
-                        scheduleNextRandomBeep();
+                        playRandomBeep(); scheduleNextRandomBeep();
                     }
                 }, randomDelay);
             }
@@ -588,10 +583,7 @@
                     t1_isRunning = true; toggleT1Settings(true);
                 }
                 t1_startBtn.disabled = true; t1_pauseBtn.disabled = false;
-                
-                // 훈련이 시작될 때 최소 3초 ~ 최대 6초 스케줄러 즉시 예약 실행
                 if (t1_isWorkPhase && !t1_isPrepPhase) scheduleNextRandomBeep();
-                
                 t1_timerInterval = setInterval(() => {
                     t1_timeLeft--;
                     if (t1_isPrepPhase && t1_timeLeft <= 3 && t1_timeLeft > 0) playCountdownBeep();
@@ -651,7 +643,7 @@
                 stopComboAudio(); 
 
                 let folder = 'basic';
-                let fileNum = Math.floor(Math.random() * 39) + 1;
+                let fileNum = 1;
 
                 if (defenseToggle.checked) {
                     const randomTotal = Math.floor(Math.random() * 70) + 1;
@@ -660,6 +652,8 @@
                     } else {
                         folder = 'defense'; fileNum = randomTotal - 39;
                     }
+                } else {
+                    fileNum = Math.floor(Math.random() * 39) + 1;
                 }
 
                 const audioSrc = `./${folder}/${folder}_${fileNum}.mp3`;
