@@ -110,7 +110,7 @@
         .display-card {
             text-align: center;
             transition: background-color 0.4s ease, color 0.4s ease;
-            padding: 40px 25px; /* 텍스트 제외 후 상하 여백 정돈 */
+            padding: 40px 25px; 
         }
 
         /* 준비 시간 (옐로우) */
@@ -261,7 +261,7 @@
             letter-spacing: 0px;
             color: #ffffff;
             line-height: 1;
-            margin-bottom: 35px; /* 텍스트 영역 제거로 바텀 마진 확보 */
+            margin-bottom: 35px; 
         }
 
         /* === 활성화 상태 디스플레이 카드 글자색 검정 통일 === */
@@ -480,10 +480,11 @@
                 if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
             }
 
+            // [수정] 액션 콜 파일 경로를 확실한 절대 경로(file:///)로 롤백
             function playRandomBeep() {
-                const audioSrc = './BeepSound.mp3'; 
+                const audioSrc = 'file:///C:/Users/PC_1M/Desktop/Boxing_Timer/BeepSound.mp3'; 
                 const beepAudio = new Audio(audioSrc);
-                beepAudio.play().catch(e => console.error(e));
+                beepAudio.play().catch(e => console.error("액션 콜 로드/재생 실패:", e));
             }
 
             function playCountdownBeep() {
@@ -643,7 +644,7 @@
                 stopComboAudio(); 
 
                 let folder = 'basic';
-                let fileNum = 1;
+                let fileNum = Math.floor(Math.random() * 39) + 1;
 
                 if (defenseToggle.checked) {
                     const randomTotal = Math.floor(Math.random() * 70) + 1;
@@ -652,11 +653,9 @@
                     } else {
                         folder = 'defense'; fileNum = randomTotal - 39;
                     }
-                } else {
-                    fileNum = Math.floor(Math.random() * 39) + 1;
                 }
 
-                const audioSrc = `./${folder}/${folder}_${fileNum}.mp3`;
+                const audioSrc = `file:///C:/Users/PC_1M/Desktop/Boxing_Timer/${folder}/${folder}_${fileNum}.mp3`;
                 currentComboAudio = new Audio(audioSrc); isAudioPlaying = true; 
 
                 currentComboAudio.onended = () => { isAudioPlaying = false; scheduleNextCombo(false); };
