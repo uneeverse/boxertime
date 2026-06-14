@@ -84,7 +84,7 @@
             width: 100%;
         }
 
-        /* 공통 카드 스타일 (기본 패딩 설정은 유지하되 아래에서 화면별 균등 조정) */
+        /* 공통 카드 스타일 */
         .card {
             background-color: #141414;
             padding: 25px;
@@ -94,10 +94,10 @@
             box-sizing: border-box;
         }
 
-        /* [수정] 타이머 화면과 펀치 콜 화면의 상단 설정 카드 세로 크기 비율 통일 */
+        /* 타이머 화면과 펀치 콜 화면의 상단 설정 카드 세로 크기 비율 통일 */
         #timer-view .card:first-child,
         #combo-view .card:first-child {
-            padding: 15px 25px; /* 양쪽 화면 모두 내부 위아래 여백을 15px로 균등 축소 */
+            padding: 15px 25px;
         }
 
         /* 타이머 디스플레이 카드 전용 스타일 */
@@ -143,10 +143,10 @@
         .input-row:last-child { border-bottom: none; padding-bottom: 0; }
         .input-row:first-child { padding-top: 0; }
 
-        /* [수정] 타이머 화면과 펀치 콜 화면의 설정 행 간격 통일 (폰트 크기는 유지) */
+        /* 타이머 화면과 펀치 콜 화면의 설정 행 간격 통일 */
         #timer-view .input-row,
         #combo-view .input-row {
-            padding: 10px 0; /* 양쪽 화면 모두 위아래 패딩을 10px로 축소 */
+            padding: 10px 0;
         }
         #timer-view .input-row:last-child,
         #combo-view .input-row:last-child { padding-bottom: 0; }
@@ -270,7 +270,7 @@
             text-transform: uppercase; 
         }
 
-        /* === 활성화 상태 (준비/운동/휴식) 디스플레이 카드 글자색 검정 통일 === */
+        /* === 활성화 상태 디스플레이 카드 글자색 검정 통일 === */
         .display-card.prep-phase #status,
         .display-card.prep-phase #combo-status,
         .display-card.prep-phase #round-display,
@@ -490,9 +490,9 @@
                 if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
             }
 
-            // [액션 콜 전용] 로컬 MP3 파일 비프음
+            // [액션 콜 전용] 상대 경로 배포용 비프음 경로 수정
             function playRandomBeep() {
-                const audioSrc = 'file:///C:/Users/PC_1M/Desktop/Boxing_Timer/BeepSound.mp3';
+                const audioSrc = './BeepSound.mp3'; // <-- 상대 경로로 수정 완료
                 const beepAudio = new Audio(audioSrc);
                 beepAudio.play().catch(e => console.error(e));
             }
@@ -689,14 +689,15 @@
                     fileNum = Math.floor(Math.random() * 39) + 1; comboTextStr = basicCombosText[fileNum - 1];
                 }
 
-                const audioSrc = `file:///C:/Users/PC_1M/Desktop/Boxing_Timer/${folder}/${folder}_${fileNum}.mp3`;
+                const audioSrc = `./${folder}/${folder}_${fileNum}.mp3`; // <-- 상대 경로로 수정 완료
                 currentComboAudio = new Audio(audioSrc); isAudioPlaying = true; 
                 t2_textDisplayEl.textContent = comboTextStr;
 
                 currentComboAudio.onended = () => { isAudioPlaying = false; t2_textDisplayEl.textContent = ""; scheduleNextCombo(false); };
                 currentComboAudio.onerror = () => {
                     isAudioPlaying = false; t2_textDisplayEl.textContent = ""; 
-                    setTimeout(() => { if (t2_isRunning && t2_isWorkPhase && !t2_isPrepPhase && !isAudioPlaying) playRandomComboAudio(); }, 100);
+                    // 무한 루프를 막고 에러가 났을 때 다음 오디오 스케줄로 안전하게 넘어가도록 지연 세팅
+                    setTimeout(() => { if (t2_isRunning && t2_isWorkPhase && !t2_isPrepPhase && !isAudioPlaying) scheduleNextCombo(false); }, 1000);
                 };
                 currentComboAudio.play().catch(e => { isAudioPlaying = false; t2_textDisplayEl.textContent = ""; scheduleNextCombo(false); });
             }
